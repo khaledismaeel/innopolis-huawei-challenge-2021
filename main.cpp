@@ -4,7 +4,7 @@
 
 using namespace std;
 
-#define LITTLE
+// #define LITTLE
 
 namespace schema {
     enum dimension_type {
@@ -43,6 +43,22 @@ namespace utils {
             out << arr[i];
         return out;
     }
+
+    bool match(const data::ip &a, const data::ip &b) {
+        for (int i = 0; i < data::IP_SIZE; i++) {
+            if (a[i] == '*')
+                return true;
+            if (a[i] == '0' and b[i] == '1')
+                return false;
+            if (a[i] == '1' and b[i] == '0')
+                return false;
+        }
+        return true;
+    }
+
+    bool match(const pair<data::port, data::port> &a, const data::port &b) {
+        return b >= a.first and b <= a.second;
+    }
 }
 
 namespace parsing {
@@ -58,7 +74,7 @@ namespace parsing {
                     ips[ip_idx][j] = token[j];
                 ip_idx++;
             } else {
-                auto div = token.find("-");
+                auto div = token.find('-');
                 auto l = (unsigned short) stoi(token.substr(0, div));
                 auto r = (unsigned short) stoi(token.substr(div + 1));
                 ports[port_idx++] = {l, r};
@@ -107,9 +123,11 @@ namespace parsing {
                 string line;
 
                 cin.ignore();
+                cin.ignore();
+
                 getline(cin, line);
                 size_t r = 0;
-                while ((r = line.find(" ")) != string::npos) {
+                while ((r = line.find(' ')) != string::npos) {
                     tokens.push_back(line.substr(0, r));
                     line.erase(0, r + 1);
                 }
@@ -117,7 +135,7 @@ namespace parsing {
             }
             schema::n_ips = schema::n_ports = 0;
             for (const auto &token: tokens) {
-                if (token.find("-") == string::npos) {
+                if (token.find('-') == string::npos) {
                     schema::dims[schema::n_dims++] = schema::dimension_type::IP;
                     schema::n_ips++;
                 } else {
@@ -153,8 +171,33 @@ namespace parsing {
 }
 
 int main() {
-    using utils::operator<<;
     parsing::parse_input();
+
+    for (int i = 0; i < data::m; i++) {
+        int ans = -1;
+        for (int j = 0; j < data::n; j++) {
+            bool found = true;
+            for (int k = 0; k < schema::n_ips; k++) {
+                if (not utils::match(data::ip_rules[j][k], data::ip_keys[i][k])) {
+                    found = false;
+                    break;
+                }
+            }
+            if (not found)
+                continue;
+            for (int k = 0; k < schema::n_ports; k++) {
+                if (not utils::match(data::port_rules[j][k], data::port_keys[i][k])) {
+                    found = false;
+                    break;
+                }
+            }
+            if (found) {
+                ans = j;
+                break;
+            }
+        }
+        cout << ans << '\n';
+    }
 
     return 0;
 }
