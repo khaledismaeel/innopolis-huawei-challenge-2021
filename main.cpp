@@ -1,108 +1,160 @@
 #include<iostream>
 #include<vector>
+#include<array>
 
 using namespace std;
 
-enum dimension_type {
-    TERNARY, RANGE
-};
+#define LITTLE
 
-struct rule {
-    vector<string> ternaries;
-    vector<pair<unsigned short, unsigned short>> ranges;
+namespace schema {
+    enum dimension_type {
+        IP, PORT
+    };
+    size_t n_ips, n_ports;
+    size_t n_dims;
 
-    rule() = default;
+    const size_t MAXD = 5;
+    array<dimension_type, MAXD> dims;
+}
 
-    rule(const vector<string> &tokens, const vector<dimension_type> &schema) {
-        for (int i = 0; i < tokens.size(); ++i) {
+namespace data {
+#ifdef LITTLE
+    const size_t IP_SIZE = 5;
+#else
+    const size_t IP_SIZE = 32;
+#endif
+    typedef array<char, IP_SIZE> ip;
+    typedef unsigned short port;
+
+    size_t n, m;
+    const size_t MAXN = 150000;
+    const size_t MAXM = 15000;
+
+    array<array<ip, schema::MAXD>, MAXN> ip_rules;
+    array<array<pair<port, port>, schema::MAXD>, MAXN> port_rules;
+
+    array<array<ip, schema::MAXD>, MAXM> ip_keys;
+    array<array<port, schema::MAXD>, MAXN> port_keys;
+}
+
+namespace utils {
+    ostream &operator<<(ostream &out, const data::ip &arr) {
+        for (size_t i = 0; i < schema::MAXD; i++)
+            out << arr[i];
+        return out;
+    }
+}
+
+namespace parsing {
+    pair<array<data::ip, schema::MAXD>, array<pair<data::port, data::port>, schema::MAXD>>
+    parse_rule(const vector<string> &tokens) {
+        size_t ip_idx = 0, port_idx = 0;
+        array<data::ip, schema::MAXD> ips;
+        array<pair<data::port, data::port>, schema::MAXD> ports;
+        for (size_t i = 0; i < schema::n_dims; ++i) {
             const auto &token = tokens[i];
-            if (schema[i] == dimension_type::TERNARY)
-                ternaries.push_back(token);
-            else {
+            if (schema::dims[i] == schema::dimension_type::IP) {
+                for (size_t j = 0; j < data::IP_SIZE; j++)
+                    ips[ip_idx][j] = token[j];
+                ip_idx++;
+            } else {
                 auto div = token.find("-");
                 auto l = (unsigned short) stoi(token.substr(0, div));
                 auto r = (unsigned short) stoi(token.substr(div + 1));
-                ranges.emplace_back(l, r);
+                ports[port_idx++] = {l, r};
             }
         }
+        return {ips, ports};
     }
-};
 
-struct key {
-    vector<string> ternaries;
-    vector<unsigned short> ranges;
-
-    key() = default;
-
-    key(const vector<string> &tokens, const vector<dimension_type> &schema) {
-        for (int i = 0; i < tokens.size(); ++i) {
+    pair<array<data::ip, schema::MAXD>, array<data::port, schema::MAXD>>
+    parse_key(const vector<string> &tokens) {
+        size_t ip_idx = 0, port_idx = 0;
+        array<data::ip, schema::MAXD> ips;
+        array<data::port, schema::MAXD> ports;
+        for (size_t i = 0; i < schema::n_dims; ++i) {
             const auto &token = tokens[i];
-            if (schema[i] == dimension_type::TERNARY)
-                ternaries.push_back(token);
-            else
-                ranges.push_back((unsigned short)stoi(token));
+            if (schema::dims[i] == schema::dimension_type::IP) {
+                for (size_t j = 0; j < data::IP_SIZE; j++)
+                    ips[ip_idx][j] = token[j];
+                ip_idx++;
+            } else
+                ports[port_idx++] = stoi(token);
+        }
+        return {ips, ports};
+    }
+
+    void parse_input() {
+        using utils::operator<<;
+        ios_base::sync_with_stdio(false);
+        cin.tie(nullptr);
+        cout.tie(nullptr);
+#ifdef LITTLE
+        freopen("little_input.txt", "r", stdin);
+#else
+        freopen("input.txt", "r", stdin);
+#endif
+        freopen("output.txt", "w", stdout);
+
+        cin >> data::n;
+        if (data::n == 0) {
+            cerr << "no data is read, you probably fucked up" << endl;
+            return;
+        }
+        {
+            vector<string> tokens;
+            {
+                string line;
+
+                cin.ignore();
+                getline(cin, line);
+                size_t r = 0;
+                while ((r = line.find(" ")) != string::npos) {
+                    tokens.push_back(line.substr(0, r));
+                    line.erase(0, r + 1);
+                }
+                tokens.push_back(line);
+            }
+            schema::n_ips = schema::n_ports = 0;
+            for (const auto &token: tokens) {
+                if (token.find("-") == string::npos) {
+                    schema::dims[schema::n_dims++] = schema::dimension_type::IP;
+                    schema::n_ips++;
+                } else {
+                    schema::dims[schema::n_dims++] = schema::dimension_type::PORT;
+                    schema::n_ports++;
+                }
+            }
+            auto rule = parsing::parse_rule(tokens);
+            data::ip_rules[0] = rule.first;
+            data::port_rules[0] = rule.second;
+        }
+
+        for (size_t i = 1; i < data::n; i++) {
+            vector<string> tokens(schema::n_dims);
+            for (size_t j = 0; j < schema::n_dims; j++)
+                cin >> tokens[j];
+            auto rule = parsing::parse_rule(tokens);
+            data::ip_rules[i] = rule.first;
+            data::port_rules[i] = rule.second;
+        }
+
+        cin >> data::m;
+
+        for (size_t i = 0; i < data::m; i++) {
+            vector<string> tokens(schema::n_dims);
+            for (size_t j = 0; j < schema::n_dims; j++)
+                cin >> tokens[j];
+            auto key = parsing::parse_key(tokens);
+            data::ip_keys[i] = key.first;
+            data::port_keys[i] = key.second;
         }
     }
-};
+}
 
 int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(nullptr);
-    cout.tie(nullptr);
-
-    freopen("input.txt", "r", stdin);
-    freopen("output.txt", "w", stdout);
-
-    size_t n; // rule count
-    cin >> n;
-
-    vector<rule> rules(n);
-
-    vector<dimension_type> dims;
-    {
-        vector<string> tokens;
-        {
-            string line;
-
-            cin.ignore();
-            getline(cin, line);
-            size_t r = 0;
-            while ((r = line.find(" ")) != string::npos) {
-                tokens.push_back(line.substr(0, r));
-                line.erase(0, r + 1);
-            }
-            tokens.push_back(line);
-        }
-        for (const auto &token: tokens) {
-            if (token.find("-") == string::npos)
-                dims.push_back(dimension_type::TERNARY);
-            else
-                dims.push_back(dimension_type::RANGE);
-        }
-
-        rules[0] = rule(tokens, dims);
-    }
-
-    for (int i = 1; i < n; i++) {
-        vector<string> tokens(dims.size());
-        for (int j = 0; j < dims.size(); j++)
-            cin >> tokens[j];
-        rules[i] = rule(tokens, dims);
-    }
-
-    size_t m; // key count
-    cin >> m;
-
-
-    vector<key> keys(m);
-    for (int i = 0; i < m; i++) {
-        vector<string> tokens(dims.size());
-        for (int j = 0; j < dims.size(); j++)
-            cin >> tokens[j];
-        keys[i] = key(tokens, dims);
-    }
-
-
+    using utils::operator<<;
+    parsing::parse_input();
 
     return 0;
 }
