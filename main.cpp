@@ -10,22 +10,23 @@ namespace schema {
     enum dimension_type {
         IP, PORT
     };
-    size_t n_ips, n_ports;
-    size_t n_dims;
+    unsigned int n_dims;
 
-    const size_t MAXD = 5;
+    const unsigned int MAXD = 5;
     array<dimension_type, MAXD> dims;
+
+    vector<unsigned int> ip_dims, port_dims;
 }
 
 namespace data {
 #ifdef LITTLE
-    const size_t IP_SIZE = 5;
+    const unsigned int IP_SIZE = 5;
 #else
-    const size_t IP_SIZE = 32;
+    const unsigned int IP_SIZE = 32;
 #endif
-    size_t n, m;
-    const size_t MAXN = 150000;
-    const size_t MAXM = 15000;
+    unsigned int n, m;
+    const unsigned int MAXN = 150000;
+    const unsigned int MAXM = 15000;
 
     array<array<pair<unsigned int, unsigned int>, schema::MAXD>, MAXN> rules;
     array<array<unsigned int, schema::MAXD>, MAXM> keys;
@@ -34,12 +35,11 @@ namespace data {
 namespace utils {
     bool match(const array<pair<unsigned int, unsigned int>, schema::MAXD> &rule,
                const array<unsigned int, schema::MAXD> &key) {
-        for (size_t i = 0; i < schema::n_dims; i++)
+        for (unsigned int i = 0; i < schema::n_dims; i++)
             if (key[i] < rule[i].first or key[i] > rule[i].second)
                 return false;
         return true;
     }
-
 }
 
 namespace parsing {
@@ -75,15 +75,15 @@ namespace parsing {
     array<pair<unsigned int, unsigned int>, schema::MAXD>
     parse_rule(const vector<string> &tokens) {
         array<pair<unsigned int, unsigned int>, schema::MAXD> ranges;
-        for (size_t i = 0; i < schema::n_dims; ++i)
+        for (unsigned int i = 0; i < schema::n_dims; ++i)
             ranges[i] = parse_rule_token(tokens[i], schema::dims[i]);
         return ranges;
     }
 
     array<unsigned int, schema::MAXD>
     parse_key(const vector<string> &tokens) {
-        array<unsigned int, schema::MAXD> ret;
-        for (size_t i = 0; i < schema::n_dims; ++i)
+        array<unsigned int, schema::MAXD> ret{};
+        for (unsigned int i = 0; i < schema::n_dims; ++i)
             ret[i] = parse_key_token(tokens[i], schema::dims[i]);
         return ret;
     }
@@ -120,35 +120,35 @@ namespace parsing {
                 }
                 tokens.push_back(line);
             }
-            schema::n_ips = schema::n_ports = 0;
             for (const auto &token: tokens) {
-                if (token.find('-') == string::npos) {
+                if (token.find('-') == string::npos)
                     schema::dims[schema::n_dims++] = schema::dimension_type::IP;
-                    schema::n_ips++;
-                } else {
+                else
                     schema::dims[schema::n_dims++] = schema::dimension_type::PORT;
-                    schema::n_ports++;
-                }
             }
             data::rules[0] = parse_rule(tokens);
         }
 
-        for (size_t i = 1; i < data::n; i++) {
+        for (unsigned int i = 1; i < data::n; i++) {
             vector<string> tokens(schema::n_dims);
-            for (size_t j = 0; j < schema::n_dims; j++)
+            for (unsigned int j = 0; j < schema::n_dims; j++)
                 cin >> tokens[j];
             data::rules[i] = parse_rule(tokens);
         }
 
         cin >> data::m;
 
-        for (size_t i = 0; i < data::m; i++) {
+        for (unsigned int i = 0; i < data::m; i++) {
             vector<string> tokens(schema::n_dims);
-            for (size_t j = 0; j < schema::n_dims; j++)
+            for (unsigned int j = 0; j < schema::n_dims; j++)
                 cin >> tokens[j];
             data::keys[i] = parse_key(tokens);
         }
     }
+}
+
+namespace logic {
+
 }
 
 int main() {
@@ -164,6 +164,5 @@ int main() {
         }
         cout << ans << '\n';
     }
-
     return 0;
 }
