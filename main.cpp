@@ -1,6 +1,9 @@
 #include<iostream>
 #include<vector>
 #include<array>
+#include<fstream>
+#include<algorithm>
+#include<set>
 
 using namespace std;
 
@@ -35,6 +38,8 @@ namespace data {
 
     array<array<ip, schema::MAXD>, MAXM> ip_keys;
     array<array<port, schema::MAXD>, MAXN> port_keys;
+
+    vector<size_t> answers;
 }
 
 namespace utils {
@@ -58,6 +63,46 @@ namespace utils {
 
     bool match(const pair<data::port, data::port> &a, const data::port &b) {
         return b >= a.first and b <= a.second;
+    }
+
+    string show_rule(size_t index){
+        string s;
+        s += string(data::ip_rules[index][0].begin(), data::ip_rules[index][0].end()) + " ";
+        s += string(data::ip_rules[index][1].begin(), data::ip_rules[index][1].end()) + " ";
+        s += to_string(data::port_rules[index][0].first) + "-" + to_string(data::port_rules[index][0].second) + " ";
+        s += to_string(data::port_rules[index][1].first) + "-" + to_string(data::port_rules[index][1].second) + " ";
+        s += to_string(data::port_rules[index][2].first) + "-" + to_string(data::port_rules[index][2].second) + " ";
+        return s;
+    }
+
+    string show_key(size_t index){
+        string s;
+        s += string(data::ip_keys[index][0].begin(), data::ip_keys[index][0].end()) + " ";
+        s += string(data::ip_keys[index][1].begin(), data::ip_keys[index][1].end()) + " ";
+        s += to_string(data::port_keys[index][0]) + " ";
+        s += to_string(data::port_keys[index][1]) + " ";
+        s += to_string(data::port_keys[index][2]) + " ";
+        return s;
+    }
+
+    int find_key_for_rule(size_t rule_id){
+        auto ans_it = find(data::answers.begin(), data::answers.end(), rule_id);
+        if(ans_it == data::answers.end()){
+            return -1;
+        }else{
+            return ans_it - data::answers.begin();
+        }
+    }
+
+    void populate_answer_in_range(int from, int to, vector<string> &ans_rules, vector<pair<int, string>> &ans_keys, int &ans_id){
+        for (size_t cur = from; cur < to; ++cur) {
+            int ans = utils::find_key_for_rule(cur);
+            if (ans != -1){
+                ans_rules.push_back(utils::show_rule(cur));
+                ans_keys.emplace_back(ans_id, utils::show_key(ans));
+                ans_id++;
+            }
+        }
     }
 }
 
@@ -110,7 +155,6 @@ namespace parsing {
 #else
         freopen("input.txt", "r", stdin);
 #endif
-        freopen("output.txt", "w", stdout);
 
         cin >> data::n;
         if (data::n == 0) {
@@ -168,35 +212,53 @@ namespace parsing {
             data::port_keys[i] = key.second;
         }
     }
+
+    void parse_output(){
+        ifstream fin("output.txt");
+        size_t temp;
+        while(fin >> temp){
+            data::answers.push_back(temp);
+        }
+    }
 }
 
 int main() {
     parsing::parse_input();
+    parsing::parse_output();
 
-    for (int i = 0; i < data::m; i++) {
-        int ans = -1;
-        for (int j = 0; j < data::n; j++) {
-            bool found = true;
-            for (int k = 0; k < schema::n_ips; k++) {
-                if (not utils::match(data::ip_rules[j][k], data::ip_keys[i][k])) {
-                    found = false;
-                    break;
-                }
-            }
-            if (not found)
-                continue;
-            for (int k = 0; k < schema::n_ports; k++) {
-                if (not utils::match(data::port_rules[j][k], data::port_keys[i][k])) {
-                    found = false;
-                    break;
-                }
-            }
-            if (found) {
-                ans = j;
-                break;
-            }
-        }
-        cout << ans << '\n';
+    vector<size_t> interesting_rules({0, 1, 2, 3, 4, 100, 101, 102, 103, 3440, 3480, 4500, 4550, 13530, 23020, 53272, 58010, 100792, 128750, 130539, 130554});
+
+    vector<string> ans_rules;
+    vector<pair<int, string>> ans_keys;
+    int ans_id = 0;
+
+    cout << "input:\n";
+
+    utils::populate_answer_in_range(0, 50, ans_rules, ans_keys, ans_id);
+    utils::populate_answer_in_range(100, 150, ans_rules, ans_keys, ans_id);
+    utils::populate_answer_in_range(3440, 3480, ans_rules, ans_keys, ans_id);
+    utils::populate_answer_in_range(4500, 4600, ans_rules, ans_keys, ans_id);
+    utils::populate_answer_in_range(53272, 53350, ans_rules, ans_keys, ans_id);
+    utils::populate_answer_in_range(128750, 128800, ans_rules, ans_keys, ans_id);
+    utils::populate_answer_in_range(130539, 130600, ans_rules, ans_keys, ans_id);
+    utils::populate_answer_in_range(130554, 130700, ans_rules, ans_keys, ans_id);
+
+    cout << ans_rules.size() << "\n";
+
+    for(const auto &cur : ans_rules){
+        cout << cur << '\n';
+    }
+
+    cout << ans_keys.size() << "\n";
+
+    for(const auto &cur : ans_keys){
+        cout << cur.second << '\n';
+    }
+
+    cout << "output:\n";
+
+    for(const auto &cur : ans_keys){
+        cout << cur.first << '\n';
     }
 
     return 0;
