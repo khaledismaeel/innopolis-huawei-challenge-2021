@@ -1,6 +1,6 @@
-#pragma GCC target ("avx2")
-#pragma GCC optimization ("O3")
-#pragma GCC optimization ("unroll-loops")
+//#pragma GCC target ("avx2")
+//#pragma GCC optimization ("O3")
+//#pragma GCC optimization ("unroll-loops")
 
 #include<iostream>
 #include<vector>
@@ -51,26 +51,6 @@ namespace utils {
 }
 
 namespace parsing {
-    pair<unsigned int, unsigned int> parse_rule_token(const string &token, const schema::dimension_type &type) {
-        unsigned int l = 0, r = 0;
-        if (type == schema::dimension_type::IP) {
-            for (const auto &c: token) {
-                l <<= 1, r <<= 1;
-                if (c == '*')
-                    r |= 1;
-                else {
-                    l |= (c - '0');
-                    r |= (c - '0');
-                }
-            }
-        } else {
-            auto div = token.find('-');
-            l = (unsigned short) stoi(token.substr(0, div));
-            r = (unsigned short) stoi(token.substr(div + 1));
-        }
-        return {l, r};
-    }
-
     unsigned int parse_key_token(const string &token, const schema::dimension_type &type) {
         unsigned int ret = 0;
         if (type == schema::dimension_type::IP)
@@ -83,8 +63,40 @@ namespace parsing {
     array<pair<unsigned int, unsigned int>, schema::MAXD>
     parse_rule(const vector<string> &tokens) {
         array<pair<unsigned int, unsigned int>, schema::MAXD> ranges;
-        for (unsigned int i = 0; i < schema::n_dims; ++i)
-            ranges[i] = parse_rule_token(tokens[i], schema::dims[i]);
+        for (unsigned int i = 0; i < schema::n_dims; ++i) {
+            ranges[i] = {0, 0};
+            const auto &token = tokens[i];
+            const auto &type = schema::dims[i];
+            auto &l = ranges[i].first;
+            auto &r = ranges[i].second;
+            if (type == schema::dimension_type::IP) {
+                for (unsigned int j = 0; j < data::IP_SIZE; ++j) {
+                    const char c = token[j];
+                    if (c == '*') {
+                        l <<= (data::IP_SIZE - j);
+                        r <<= (data::IP_SIZE - j);
+                        r |= ((unsigned int)~0) >> j;
+                        break;
+                    } else {
+                        l <<= 1;
+                        l |= (c - '0');
+                        r <<= 1;
+                        r |= (c - '0');
+                    }
+                }
+            } else {
+                unsigned int cur = 0;
+                while (token[cur] != '-') {
+                    l = l * 10 + token[cur] - '0';
+                    cur++;
+                }
+                cur++;
+                while (cur < token.size() && token[cur] != '\r') {
+                    r = r * 10 + token[cur] - '0';
+                    cur++;
+                }
+            }
+        }
         for (unsigned int i = schema::n_dims; i < schema::MAXD; i++)
             ranges[i] = {0, numeric_limits<unsigned int>::max()};
         return ranges;
@@ -122,6 +134,7 @@ namespace parsing {
                 cin.ignore();
                 cin.ignore();
 
+                // fgetsn
                 getline(cin, line);
                 size_t r = 0;
                 while ((r = line.find(' ')) != string::npos) {
