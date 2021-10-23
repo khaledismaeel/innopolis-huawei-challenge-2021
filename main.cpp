@@ -59,175 +59,180 @@ namespace utils {
     }
 
     inline unsigned int convert_l(const unsigned int &x) {
-        if (x == 707406378)return 0;
-        else if (x == 824846890)return 1;
-        else if (x == 707865130)return 2;
-        else if (x == 707799594)return 0;
-        else if (x == 825240106)return 1;
-        else if (x == 808462890)return 0;
-        else if (x == 707408170)return 4;
-        else if (x == 824848682)return 5;
-        else if (x == 707801386)return 4;
-        else if (x == 707407914)return 0;
-        else if (x == 808071210)return 0;
-        else if (x == 707866666)return 2;
-        else if (x == 707865136)return 2;
-        else if (x == 808071217)return 8;
-        else if (x == 707801130)return 0;
-        else if (x == 808528432)return 2;
-        else if (x == 707406385)return 8;
-        else if (x == 707799600)return 0;
-        else if (x == 808462896)return 0;
-        else if (x == 808528426)return 2;
-        else if (x == 824848688)return 5;
-        else if (x == 824848426)return 1;
-        else if (x == 808071472)return 4;
-        else if (x == 825307440)return 7;
-        else if (x == 808530218)return 6;
-        else if (x == 825305648)return 3;
-        else if (x == 808464432)return 0;
-        else if (x == 808069680)return 0;
-        else if (x == 707866922)return 6;
-        else if (x == 707801136)return 0;
-        else if (x == 825241898)return 5;
-        else if (x == 808529968)return 2;
-        else if (x == 707801392)return 4;
-        else if (x == 707407921)return 8;
-        else if (x == 808071466)return 4;
-        else if (x == 824846896)return 1;
-        else if (x == 808069674)return 0;
-        else if (x == 707866928)return 6;
-        else if (x == 808464682)return 4;
-        else if (x == 825240112)return 1;
-        else if (x == 825307184)return 3;
-        else if (x == 825241649)return 9;
-        else if (x == 707406384)return 0;
-        else if (x == 825307441)return 15;
-        else if (x == 707866672)return 2;
-        else if (x == 707408176)return 4;
-        else if (x == 825241904)return 5;
-        else if (x == 824848433)return 9;
-        else if (x == 824848432)return 1;
-        else if (x == 808071216)return 0;
-        else if (x == 825307434)return 7;
-        else if (x == 825241648)return 1;
-        else if (x == 707407920)return 0;
-        else if (x == 808528433)return 10;
-        else if (x == 707408177)return 12;
-        else if (x == 707801137)return 8;
-        else if (x == 808529969)return 10;
-        else if (x == 707801393)return 12;
-        else if (x == 825307185)return 11;
-        else if (x == 707866673)return 10;
-        else if (x == 808464689)return 12;
-        else if (x == 808464433)return 8;
-        else if (x == 825305649)return 11;
-        else if (x == 825241905)return 13;
-        else if (x == 808530225)return 14;
-        else if (x == 707866929)return 14;
-        else if (x == 825240113)return 9;
-        else if (x == 808071473)return 12;
-        else if (x == 808529962)return 2;
-        else if (x == 824848689)return 13;
-        else if (x == 808530224)return 6;
-        else if (x == 825307178)return 3;
-        else if (x == 808462897)return 8;
-        else if (x == 707799601)return 8;
-        else if (x == 707865137)return 10;
-        else if (x == 808069681)return 8;
-        else if (x == 824846897)return 9;
-        else if (x == 825305642)return 3;
-        else if (x == 808464426)return 0;
-        else if (x == 808464688)return 4;
-        else if (x == 825241642)return 1;
-        return -1;
+        switch(x){
+            case 707406378:
+            case 808464432:
+            case 808069680:
+            case 707801136:
+            case 808462896:
+            case 707799600:
+            case 808069674:
+            case 707801130:
+            case 707406384:
+            case 808071210:
+            case 707407914:
+            case 808071216:
+            case 707407920:
+            case 808462890:
+            case 808464426:
+            case 707799594:return 0;
+            case 824848432:
+            case 825240112:
+            case 825241648:
+            case 824846896:
+            case 825241642:
+            case 824846890:
+            case 824848426:
+            case 825240106:return 1;
+            case 707865130:
+            case 707866672:
+            case 808528426:
+            case 808529968:
+            case 707865136:
+            case 808529962:
+            case 707866666:
+            case 808528432:return 2;
+            case 825305648:
+            case 825305642:
+            case 825307178:
+            case 825307184:return 3;
+            case 707408176:
+            case 707801386:
+            case 808464682:
+            case 808071472:
+            case 707408170:
+            case 808071466:
+            case 707801392:
+            case 808464688:return 4;
+            case 825241904:
+            case 824848682:
+            case 824848688:
+            case 825241898:return 5;
+            case 808530218:
+            case 707866928:
+            case 808530224:
+            case 707866922:return 6;
+            case 825307440:
+            case 825307434:return 7;
+            case 707801137:
+            case 707407921:
+            case 808464433:
+            case 808462897:
+            case 707799601:
+            case 808069681:
+            case 707406385:
+            case 808071217:return 8;
+            case 824846897:
+            case 824848433:
+            case 825240113:
+            case 825241649:return 9;
+            case 707866673:
+            case 707865137:
+            case 808529969:
+            case 808528433:return 10;
+            case 825305649:
+            case 825307185:return 11;
+            case 808071473:
+            case 808464689:
+            case 707801393:
+            case 707408177:return 12;
+            case 825241905:
+            case 824848689:return 13;
+            case 707866929:
+            case 808530225:return 14;
+            case 825307441:return 15;
+            default:
+                return -1;
+        }
     }
 
     inline unsigned int convert_r(const unsigned int &x) {
-        if (x == 707406378)return 15;
-        else if (x == 824846890)return 15;
-        else if (x == 707865130)return 15;
-        else if (x == 707799594)return 13;
-        else if (x == 825240106)return 13;
-        else if (x == 808462890)return 12;
-        else if (x == 707408170)return 15;
-        else if (x == 824848682)return 15;
-        else if (x == 707801386)return 13;
-        else if (x == 707407914)return 11;
-        else if (x == 808071210)return 10;
-        else if (x == 707866666)return 11;
-        else if (x == 707865136)return 7;
-        else if (x == 808071217)return 10;
-        else if (x == 707801130)return 9;
-        else if (x == 808528432)return 6;
-        else if (x == 707406385)return 15;
-        else if (x == 707799600)return 5;
-        else if (x == 808462896)return 4;
-        else if (x == 808528426)return 14;
-        else if (x == 824848688)return 7;
-        else if (x == 824848426)return 11;
-        else if (x == 808071472)return 6;
-        else if (x == 825307440)return 7;
-        else if (x == 808530218)return 14;
-        else if (x == 825305648)return 7;
-        else if (x == 808464432)return 0;
-        else if (x == 808069680)return 6;
-        else if (x == 707866922)return 15;
-        else if (x == 707801136)return 1;
-        else if (x == 825241898)return 13;
-        else if (x == 808529968)return 2;
-        else if (x == 707801392)return 5;
-        else if (x == 707407921)return 11;
-        else if (x == 808071466)return 14;
-        else if (x == 824846896)return 7;
-        else if (x == 808069674)return 14;
-        else if (x == 707866928)return 7;
-        else if (x == 808464682)return 12;
-        else if (x == 825240112)return 5;
-        else if (x == 825307184)return 3;
-        else if (x == 825241649)return 9;
-        else if (x == 707406384)return 7;
-        else if (x == 825307441)return 15;
-        else if (x == 707866672)return 3;
-        else if (x == 707408176)return 7;
-        else if (x == 825241904)return 5;
-        else if (x == 824848433)return 11;
-        else if (x == 824848432)return 3;
-        else if (x == 808071216)return 2;
-        else if (x == 825307434)return 15;
-        else if (x == 825241648)return 1;
-        else if (x == 707407920)return 3;
-        else if (x == 808528433)return 14;
-        else if (x == 707408177)return 15;
-        else if (x == 707801137)return 9;
-        else if (x == 808529969)return 10;
-        else if (x == 707801393)return 13;
-        else if (x == 825307185)return 11;
-        else if (x == 707866673)return 11;
-        else if (x == 808464689)return 12;
-        else if (x == 808464433)return 8;
-        else if (x == 825305649)return 15;
-        else if (x == 825241905)return 13;
-        else if (x == 808530225)return 14;
-        else if (x == 707866929)return 15;
-        else if (x == 825240113)return 13;
-        else if (x == 808071473)return 14;
-        else if (x == 808529962)return 10;
-        else if (x == 824848689)return 15;
-        else if (x == 808530224)return 6;
-        else if (x == 825307178)return 11;
-        else if (x == 808462897)return 12;
-        else if (x == 707799601)return 13;
-        else if (x == 707865137)return 15;
-        else if (x == 808069681)return 14;
-        else if (x == 824846897)return 15;
-        else if (x == 825305642)return 15;
-        else if (x == 808464426)return 8;
-        else if (x == 808464688)return 4;
-        else if (x == 825241642)return 9;
-        return -1;
+        switch(x){
+            case 808464432:return 0;
+            case 707801136:
+            case 825241648:return 1;
+            case 808529968:
+            case 808071216:return 2;
+            case 825307184:
+            case 707407920:
+            case 824848432:
+            case 707866672:return 3;
+            case 808464688:
+            case 808462896:return 4;
+            case 707801392:
+            case 825241904:
+            case 707799600:
+            case 825240112:return 5;
+            case 808528432:
+            case 808069680:
+            case 808530224:
+            case 808071472:return 6;
+            case 707865136:
+            case 824846896:
+            case 825305648:
+            case 707866928:
+            case 825307440:
+            case 824848688:
+            case 707406384:
+            case 707408176:return 7;
+            case 808464433:
+            case 808464426:return 8;
+            case 707801137:
+            case 825241649:
+            case 825241642:
+            case 707801130:return 9;
+            case 808529962:
+            case 808529969:
+            case 808071210:
+            case 808071217:return 10;
+            case 707407921:
+            case 825307178:
+            case 707866673:
+            case 825307185:
+            case 707407914:
+            case 824848433:
+            case 707866666:
+            case 824848426:return 11;
+            case 808464689:
+            case 808464682:
+            case 808462897:
+            case 808462890:return 12;
+            case 825241898:
+            case 825240106:
+            case 825241905:
+            case 707801393:
+            case 707799601:
+            case 825240113:
+            case 707801386:
+            case 707799594:return 13;
+            case 808071473:
+            case 808530225:
+            case 808071466:
+            case 808069674:
+            case 808069681:
+            case 808530218:
+            case 808528433:
+            case 808528426:return 14;
+            case 707865137:
+            case 825305649:
+            case 824846897:
+            case 825305642:
+            case 707865130:
+            case 824846890:
+            case 707406378:
+            case 824848689:
+            case 707866929:
+            case 825307441:
+            case 707866922:
+            case 707408177:
+            case 707408170:
+            case 824848682:
+            case 825307434:
+            case 707406385:return 15;
+            default:
+                return -1;
+        }
     }
-
 }
 
 namespace parsing {
@@ -381,9 +386,22 @@ int main() {
 //            }
 //        }
 //    }
-//    for (auto cur : convertl){
-//        cout << "else if (x == " << cur.first << ")return "<<cur.second << ";\n";
+//    vector<pair<unsigned int, unsigned int>> temp;
+//    for (auto cur : convertr){
+//        temp.emplace_back(cur.first, cur.second);
+////        cout << "case " << cur.first << ":return "<<cur.second << ";\n";
 //    }
+//    std::sort(temp.begin(), temp.end(), [](pair<unsigned int, unsigned int> a, pair<unsigned int, unsigned int>b) { return a.second < b.second;});
+//    for (size_t i = 0; i < temp.size()-1; ++i){
+//        const auto &cur = temp[i];
+//        if (temp[i].second == temp[i+1].second){
+//            cout << "case " << cur.first << ":\n";
+//        }else{
+//            cout << "case " << cur.first << ":return "<<cur.second << ";\n";
+//        }
+//    }
+//    cout << "case " << temp[temp.size()-1].first << ":return "<<temp[temp.size()-1].second << ";\n";
+//    return 0;
 //    for (auto cur : convertr){
 //        cout << "else if (x == " << cur.first << ")return "<<cur.second << ";\n";
 //    }
