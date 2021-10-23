@@ -1,6 +1,6 @@
-//#pragma GCC target ("avx2")
-//#pragma GCC optimization ("O3")
-//#pragma GCC optimization ("unroll-loops")
+#pragma GCC target ("avx2")
+#pragma GCC optimization ("O3")
+#pragma GCC optimization ("unroll-loops")
 
 #include<iostream>
 #include<vector>
@@ -10,6 +10,7 @@
 #include<set>
 #include<cmath>
 #include<unordered_set>
+#include<bitset>
 
 using namespace std;
 
@@ -54,6 +55,20 @@ namespace utils {
                 return false;
         return true;
     }
+
+    struct bag {
+        array<vector<unsigned int>, data::MAXN / 512 + 1> chunks;
+
+        void insert(unsigned int x) {
+            auto &chunk = chunks[x >> 9];
+            chunk.insert(lower_bound(chunk.begin(), chunk.end(), x), x);
+        }
+
+        void erase(unsigned int x) {
+            auto &chunk = chunks[x >> 9];
+            chunk.erase(lower_bound(chunk.begin(), chunk.end(), x));
+        }
+    };
 }
 
 namespace parsing {
@@ -81,7 +96,7 @@ namespace parsing {
                     if (c == '*') {
                         l <<= (data::IP_SIZE - j);
                         r <<= (data::IP_SIZE - j);
-                        r |= ((unsigned int)~0) >> j;
+                        r |= ((unsigned int) ~0) >> j;
                         break;
                     } else {
                         l <<= 1;
@@ -271,18 +286,22 @@ int main() {
         logic::evt[logic::n_evt++] = logic::event{data::rules[i][best_dim].second, i, logic::event::type::CLOSE};
     }
     sort(logic::evt.begin(), logic::evt.begin() + logic::n_evt);
-    set<unsigned int> open;
+    static utils::bag open;
+
     for (unsigned int i = 0; i < logic::n_evt; i++) {
         const logic::event &e = logic::evt[i];
         if (e.type == logic::event::type::OPEN)
             open.insert(e.id);
         if (e.type == logic::event::type::KEY) {
-            for (const auto it: open) {
-                if (utils::match(data::rules[it], data::keys[e.id])) {
-                    data::ans[e.id] = it;
-                    break;
+            for (unsigned int chunk_id = 0; chunk_id < open.chunks.size(); chunk_id++) {
+                for (auto it: open.chunks[chunk_id]) {
+                    if (utils::match(data::rules[it], data::keys[e.id])) {
+                        data::ans[e.id] = it;
+                        goto escape;
+                    }
                 }
             }
+            escape:;
         }
         if (e.type == logic::event::type::CLOSE)
             open.erase(e.id);
