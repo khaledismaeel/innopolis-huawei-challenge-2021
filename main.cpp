@@ -214,7 +214,7 @@ namespace parsing {
     }
 
     void parse_output(){
-        ifstream fin("output.txt");
+        ifstream fin("correct_output.txt");
         size_t temp;
         while(fin >> temp){
             data::answers.push_back(temp);
@@ -232,8 +232,6 @@ int main() {
     vector<pair<int, string>> ans_keys;
     int ans_id = 0;
 
-    cout << "input:\n";
-
     utils::populate_answer_in_range(0, 50, ans_rules, ans_keys, ans_id);
     utils::populate_answer_in_range(100, 150, ans_rules, ans_keys, ans_id);
     utils::populate_answer_in_range(3440, 3480, ans_rules, ans_keys, ans_id);
@@ -243,22 +241,23 @@ int main() {
     utils::populate_answer_in_range(130539, 130600, ans_rules, ans_keys, ans_id);
     utils::populate_answer_in_range(130554, 130700, ans_rules, ans_keys, ans_id);
 
-    cout << ans_rules.size() << "\n";
+    cout << "input:\r\n";
+    cout << ans_rules.size() << "\r\n";
 
     for(const auto &cur : ans_rules){
-        cout << cur << '\n';
+        cout << cur << "\r\n";
     }
 
-    cout << ans_keys.size() << "\n";
+    cout << ans_keys.size() << "\r\n";
 
     for(const auto &cur : ans_keys){
-        cout << cur.second << '\n';
+        cout << cur.second << "\r\n";
     }
 
-    cout << "output:\n";
+    cout << "output:\r\n";
 
     for(const auto &cur : ans_keys){
-        cout << cur.first << '\n';
+        cout << cur.first << "\r\n";
     }
 
     return 0;
