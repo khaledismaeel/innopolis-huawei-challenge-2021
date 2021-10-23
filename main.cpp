@@ -1,10 +1,12 @@
 #include<iostream>
 #include<vector>
 #include<array>
+#include<algorithm>
+#include<limits>
 
 using namespace std;
 
-//#define LITTLE
+// #define LITTLE
 
 namespace schema {
     enum dimension_type {
@@ -30,6 +32,7 @@ namespace data {
 
     array<array<pair<unsigned int, unsigned int>, schema::MAXD>, MAXN> rules;
     array<array<unsigned int, schema::MAXD>, MAXM> keys;
+    array<int, MAXM> ans;
 }
 
 namespace utils {
@@ -39,6 +42,19 @@ namespace utils {
             if (key[i] < rule[i].first or key[i] > rule[i].second)
                 return false;
         return true;
+    }
+
+    void remove(vector<unsigned int> &a, const vector<unsigned int> &b) {
+        unsigned int rem = 0;
+        for (unsigned int shift = 0; rem + shift < a.size();) {
+            if (binary_search(b.begin(), b.end(), a[rem + shift]))
+                shift++;
+            else {
+                a[rem] = a[rem + shift];
+                rem++;
+            }
+        }
+        a.resize(rem);
     }
 }
 
@@ -148,21 +164,48 @@ namespace parsing {
 }
 
 namespace logic {
+    vector<unsigned int> dims_perm;
 
+    unsigned int filter(vector<unsigned int> &cand, array<pair<unsigned int, unsigned int>, schema::MAXD> &rule) {
+        sort(dims_perm.begin(), dims_perm.end(), [rule](unsigned int a, unsigned int b){
+            unsigned long long xn = rule[a].second - rule[a].first, xd = (schema::dims[a] == schema::dimension_type::IP ? numeric_limits<unsigned int>::max() : numeric_limits<unsigned short>::max());
+            unsigned long long yn = rule[b].second - rule[b].first, yd = (schema::dims[b] == schema::dimension_type::IP ? numeric_limits<unsigned int>::max() : numeric_limits<unsigned short>::max());
+            return xn * yd < yn * xd;
+        });
+        auto end = cand.size();
+        for (auto dim: dims_perm) {
+            unsigned int idx = 0;
+            for (unsigned int i = 0; i < end; i++) {
+                if (data::keys[cand[i]][dim] >= rule[dim].first and data::keys[cand[i]][dim] <= rule[dim].second) {
+                    swap(cand[idx], cand[i]);
+                    idx++;
+                }
+            }
+            end = idx;
+        }
+        return end;
+    }
 }
 
 int main() {
     parsing::parse_input();
 
-    for (int i = 0; i < data::m; i++) {
-        int ans = -1;
-        for (int j = 0; j < data::n; j++) {
-            if (utils::match(data::rules[j], data::keys[i])) {
-                ans = j;
-                break;
-            }
-        }
-        cout << ans << '\n';
+    data::ans.fill(-1);
+
+    vector<unsigned int> all(data::m);
+    for (unsigned int i = 0; i < data::m; i++)
+        all[i] = i;
+    for (unsigned int i = 0; i < schema::n_dims; i++)
+        logic::dims_perm.push_back(i);
+
+    for (unsigned int i = 0; i < data::n; i++) {
+        auto covered_keys_range = logic::filter(all, data::rules[i]);
+        for (unsigned int j = 0; j < covered_keys_range; j++)
+            data::ans[all[j]] = i;
+        all.erase(all.begin(), all.begin() + covered_keys_range);
     }
+
+    for (unsigned int i = 0; i < data::m; i++)
+        cout << data::ans[i] << '\n';
     return 0;
 }
