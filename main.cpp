@@ -1,6 +1,13 @@
+#pragma GCC target ("avx2")
+#pragma GCC optimization ("O3")
+#pragma GCC optimization ("unroll-loops")
+
 #include<iostream>
 #include<vector>
 #include<array>
+#include<limits>
+#include<algorithm>
+#include<set>
 
 using namespace std;
 
@@ -30,12 +37,13 @@ namespace data {
 
     array<array<pair<unsigned int, unsigned int>, schema::MAXD>, MAXN> rules;
     array<array<unsigned int, schema::MAXD>, MAXM> keys;
+    array<int, MAXM> ans;
 }
 
 namespace utils {
     bool match(const array<pair<unsigned int, unsigned int>, schema::MAXD> &rule,
                const array<unsigned int, schema::MAXD> &key) {
-        for (unsigned int i = 0; i < schema::n_dims; i++)
+        for (unsigned int i = 1; i < schema::MAXD; i++)
             if (key[i] < rule[i].first or key[i] > rule[i].second)
                 return false;
         return true;
@@ -77,6 +85,8 @@ namespace parsing {
         array<pair<unsigned int, unsigned int>, schema::MAXD> ranges;
         for (unsigned int i = 0; i < schema::n_dims; ++i)
             ranges[i] = parse_rule_token(tokens[i], schema::dims[i]);
+        for (unsigned int i = schema::n_dims; i < schema::MAXD; i++)
+            ranges[i] = {0, numeric_limits<unsigned int>::max()};
         return ranges;
     }
 
@@ -154,15 +164,48 @@ namespace logic {
 int main() {
     parsing::parse_input();
 
-    for (int i = 0; i < data::m; i++) {
-        int ans = -1;
-        for (int j = 0; j < data::n; j++) {
-            if (utils::match(data::rules[j], data::keys[i])) {
-                ans = j;
-                break;
+    data::ans.fill(-1);
+
+    struct event {
+        unsigned int loc, id;
+        enum type {
+            OPEN, KEY, CLOSE
+        } type;
+
+        bool operator<(const event &other) {
+            if (loc == other.loc)
+                return type < other.type;
+            return loc < other.loc;
+        }
+    };
+
+    vector<event> evt;
+
+    for (unsigned int i = 0; i < data::m; i++)
+        evt.push_back(event{data::keys[i][0], i, event::type::KEY});
+    for (unsigned int i = 0; i < data::n; i++) {
+        evt.push_back(event{data::rules[i][0].first, i, event::type::OPEN});
+        evt.push_back(event{data::rules[i][0].second, i, event::type::CLOSE});
+    }
+    sort(evt.begin(), evt.end());
+    set<unsigned int> open;
+    for (const auto &e: evt) {
+        if (e.type == event::type::OPEN)
+            open.insert(e.id);
+        if (e.type == event::type::KEY) {
+            for (const auto it: open) {
+                if (utils::match(data::rules[it], data::keys[e.id])) {
+                    data::ans[e.id] = it;
+                    break;
+                }
             }
         }
-        cout << ans << '\n';
+        if (e.type == event::type::CLOSE)
+            open.erase(e.id);
     }
+
+    for (unsigned int i = 0; i < data::m; i++)
+        cout << data::ans[i] << '\n';
+
     return 0;
 }
