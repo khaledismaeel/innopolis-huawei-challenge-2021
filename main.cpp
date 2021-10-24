@@ -7,14 +7,10 @@
 #include<array>
 #include<limits>
 #include<algorithm>
-#include<set>
 #include<cmath>
-#include<unordered_set>
 #include<bitset>
 
 using namespace std;
-
-//#define LITTLE
 
 namespace schema {
     enum dimension_type {
@@ -29,11 +25,8 @@ namespace schema {
 }
 
 namespace data {
-#ifdef LITTLE
-    const unsigned int IP_SIZE = 5;
-#else
     const unsigned int IP_SIZE = 32;
-#endif
+
     unsigned int n, m;
     const unsigned int MAXN = 150000;
     const unsigned int MAXM = 15000;
@@ -135,18 +128,12 @@ namespace parsing {
         ios_base::sync_with_stdio(false);
         cin.tie(nullptr);
         cout.tie(nullptr);
-#ifdef LITTLE
-        freopen("little_input.txt", "r", stdin);
-#else
+
+
         freopen("input.txt", "r", stdin);
-#endif
         freopen("output.txt", "w", stdout);
 
         cin >> data::n;
-        if (data::n == 0) {
-            cerr << "no data is read, you probably fucked up" << endl;
-            return;
-        }
         {
             vector<string> tokens;
             {
@@ -155,7 +142,6 @@ namespace parsing {
                 cin.ignore();
                 cin.ignore();
 
-                // fgetsn
                 getline(cin, line);
                 size_t r = 0;
                 while ((r = line.find(' ')) != string::npos) {
@@ -191,28 +177,23 @@ namespace parsing {
     }
 }
 
-namespace logic {
+int main() {
+    parsing::parse_input();
+
+    data::ans.fill(-1);
+
     struct event {
         unsigned int loc, id;
         enum type {
             OPEN, KEY, CLOSE
         } type;
 
-        bool operator<(const logic::event &other) {
-            if (loc == other.loc)
-                return type < other.type;
+        bool operator<(const event &other) const {
+//            if (loc == other.loc)
+//                return type < other.type;
             return loc < other.loc;
         }
     };
-
-    array<event, 2u * data::MAXN + data::MAXM> evt;
-    unsigned int n_evt;
-}
-
-int main() {
-    parsing::parse_input();
-
-    data::ans.fill(-1);
 
     for (unsigned int i = 0; i < schema::n_dims; i++) {
         if (schema::dims[i] == schema::dimension_type::IP) {
@@ -220,81 +201,27 @@ int main() {
             break;
         }
     }
-//    {
-//        unsigned long long best_n_operations = numeric_limits<unsigned long long>::max();
-//        for (int dim = 0; dim < schema::n_dims; dim++) {
-//            if (schema::dims[dim] == schema::dimension_type::PORT)
-//                continue;
-//            vector<logic::event> evt;
-//            for (unsigned int i = 0; i < data::m; i++)
-//                evt.push_back(logic::event{data::keys[i][dim], i, logic::event::type::KEY});
-//            for (unsigned int i = 0; i < data::n; i++) {
-//                evt.push_back(logic::event{data::rules[i][dim].first, i, logic::event::type::OPEN});
-//                evt.push_back(logic::event{data::rules[i][dim].second, i, logic::event::type::CLOSE});
-//            }
-//            sort(evt.begin(), evt.end());
-//
-//            unsigned long long n_operations = 0;
-//            unsigned int opened = 0;
-//            vector<unsigned int> stats;
-//            set<int> open_rules;
-//            set<int> non_trivial;
-//            for (const auto &e: evt) {
-//                if (e.type == logic::event::type::OPEN) {
-//                    opened++;
-//                    open_rules.insert(e.id);
-//                }
-//                if (e.type == logic::event::type::KEY) {
-//                    stats.push_back(opened);
-//                    n_operations += opened;
-//                    if (not open_rules.empty())
-//                        non_trivial.insert(*open_rules.begin());
-//                    if (n_operations > best_n_operations)
-//                        break;
-//                }
-//                if (e.type == logic::event::type::CLOSE) {
-//                    opened--;
-//                    open_rules.erase(e.id);
-//                }
-//            }
-//            if (n_operations < best_n_operations) {
-//                best_n_operations = n_operations;
-//                schema::best_dim = dim;
-//            }
-//            {
-//                cerr << "dimension: " << dim << endl;
-//                double mean = 0.0;
-//                for (auto it : stats)
-//                    mean += it;
-//                mean /= stats.size();
-//                double std = 0.0;
-//                for (auto it : stats)
-//                    std += (mean - it) * (mean - it);
-//                std /= stats.size();
-//                std = sqrt(std);
-//                cerr << "size: " << stats.size() << ", total: " << n_operations << ", mean: " << mean << ", std: " << std << endl;
-//                cerr << non_trivial.size() << '\n';
-//            }
-//        }
-//    }
 
-    using schema::best_dim;
+    static array<event, 2u * data::MAXN + data::MAXM> evt;
+    unsigned int n_evt = 0;
+
+    for (unsigned int i = 0; i < data::n; i++)
+        evt[n_evt++] = event{data::rules[i][schema::best_dim].first, i, event::type::OPEN};
     for (unsigned int i = 0; i < data::m; i++)
-        logic::evt[logic::n_evt++] = logic::event{data::keys[i][best_dim], i, logic::event::type::KEY};
-    for (unsigned int i = 0; i < data::n; i++) {
-        logic::evt[logic::n_evt++] = logic::event{data::rules[i][best_dim].first, i, logic::event::type::OPEN};
-        logic::evt[logic::n_evt++] = logic::event{data::rules[i][best_dim].second, i, logic::event::type::CLOSE};
-    }
-    sort(logic::evt.begin(), logic::evt.begin() + logic::n_evt);
+        evt[n_evt++] = event{data::keys[i][schema::best_dim], i, event::type::KEY};
+    for (unsigned int i = 0; i < data::n; i++)
+        evt[n_evt++] = event{data::rules[i][schema::best_dim].second, i, event::type::CLOSE};
+
+    stable_sort(evt.begin(), evt.begin() + n_evt);
     static utils::bag open;
 
-    for (unsigned int i = 0; i < logic::n_evt; i++) {
-        const logic::event &e = logic::evt[i];
-        if (e.type == logic::event::type::OPEN)
+    for (unsigned int i = 0; i < n_evt; i++) {
+        const event &e = evt[i];
+        if (e.type == event::type::OPEN)
             open.insert(e.id);
-        if (e.type == logic::event::type::KEY) {
-            for (unsigned int chunk_id = 0; chunk_id < open.chunks.size(); chunk_id++) {
-                for (auto it: open.chunks[chunk_id]) {
+        if (e.type == event::type::KEY) {
+            for (const auto &chunk: open.chunks) {
+                for (auto it: chunk) {
                     if (utils::match(data::rules[it], data::keys[e.id])) {
                         data::ans[e.id] = it;
                         goto escape;
@@ -303,7 +230,7 @@ int main() {
             }
             escape:;
         }
-        if (e.type == logic::event::type::CLOSE)
+        if (e.type == event::type::CLOSE)
             open.erase(e.id);
     }
 
