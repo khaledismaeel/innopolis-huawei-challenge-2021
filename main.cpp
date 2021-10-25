@@ -189,19 +189,22 @@ int main() {
         } type;
 
         bool operator<(const event &other) const {
-//            if (loc == other.loc)
-//                return type < other.type;
             return loc < other.loc;
         }
     };
-
-    for (unsigned int i = 0; i < schema::n_dims; i++) {
-        if (schema::dims[i] == schema::dimension_type::IP) {
-            schema::best_dim = i;
-            break;
+    {
+        unsigned int passed_ip_dims = 0;
+        for (unsigned int i = 0; i < schema::n_dims; i++) {
+            if (schema::dims[i] == schema::dimension_type::IP) {
+                if (passed_ip_dims == 2) {
+                    schema::best_dim = i;
+                    break;
+                }
+                else
+                    passed_ip_dims++;
+            }
         }
     }
-
     static array<event, 2u * data::MAXN + data::MAXM> evt;
     unsigned int n_evt = 0;
 
