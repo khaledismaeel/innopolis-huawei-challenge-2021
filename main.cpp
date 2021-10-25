@@ -1,5 +1,5 @@
 #pragma GCC target ("avx2")
-#pragma GCC optimization ("O3")
+#pragma GCC optimization ("O2")
 #pragma GCC optimization ("unroll-loops")
 
 #include<iostream>
@@ -10,7 +10,9 @@
 #include<set>
 #include<cmath>
 #include<unordered_set>
-#include<bitset>
+#include <unordered_map>
+#include <bitset>
+#include <cassert>
 
 using namespace std;
 
@@ -56,195 +58,48 @@ namespace utils {
         return true;
     }
 
-    struct bag {
-        array<vector<unsigned int>, data::MAXN / 512 + 1> chunks;
+    const int tablel[] = {-1, -1, 0, -1, -1, -1, 2, -1, -1, -1, -1, -1, -1, -1, 0, -1, 8, -1, 2, -1, 10, 5, -1, -1, -1,
+                          -1, -1, -1, -1, -1, -1, -1, 4, 5, -1, 13, -1, -1, -1, -1, -1, -1, -1, -1, 4, -1, 12, -1, -1,
+                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 5, -1, -1,
+                          -1, 7, -1, -1, -1, -1, -1, -1, 4, 5, -1, 13, 6, 7, -1, 15, -1, -1, -1, -1, 4, -1, 12, -1, 6,
+                          4,
+                          14, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, 4, -1, 12, -1, -1, -1, -1, -1, 0, 1, -1, 9, -1, -1,
+                          -1, -1, -1, -1, -1, -1, 0, -1, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 4,
+                          -1, -1, -1, 6, -1, -1, -1, -1, 1, -1, -1, 4, 3, 12, -1, 6, -1, 14, -1, 0, 1, -1, 9, 2, 3, -1,
+                          11, -1, -1, -1, -1, 0, -1, 8, -1, 2, 0, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, 8,
+                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                          -1,
+                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, 2, -1, -1, -1, -1, -1, 1, -1, 0, -1, 8,
+                          -1, 2, -1, 10, -1, -1, 0, 1, -1, 9, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, 8, -1, -1, -1, -1,
+                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, 3,
+                          -1, -1, -1, -1, -1, -1, 0, 1, -1, 9, 2, 3, -1, 11, -1, -1, -1, -1, 0, -1, 8, -1, 2, 0, 10, -1,
+                          -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, 8};
 
-        void insert(unsigned int x) {
-            auto &chunk = chunks[x >> 9];
-            chunk.insert(lower_bound(chunk.begin(), chunk.end(), x), x);
-        }
-
-        void erase(unsigned int x) {
-            auto &chunk = chunks[x >> 9];
-            chunk.erase(lower_bound(chunk.begin(), chunk.end(), x));
-        }
-    };
-
-    inline unsigned int convert_l(const unsigned int &x) {
-        switch(x){
-            case 707406378:
-            case 808464432:
-            case 808069680:
-            case 707801136:
-            case 808462896:
-            case 707799600:
-            case 808069674:
-            case 707801130:
-            case 707406384:
-            case 808071210:
-            case 707407914:
-            case 808071216:
-            case 707407920:
-            case 808462890:
-            case 808464426:
-            case 707799594:return 0;
-            case 824848432:
-            case 825240112:
-            case 825241648:
-            case 824846896:
-            case 825241642:
-            case 824846890:
-            case 824848426:
-            case 825240106:return 1;
-            case 707865130:
-            case 707866672:
-            case 808528426:
-            case 808529968:
-            case 707865136:
-            case 808529962:
-            case 707866666:
-            case 808528432:return 2;
-            case 825305648:
-            case 825305642:
-            case 825307178:
-            case 825307184:return 3;
-            case 707408176:
-            case 707801386:
-            case 808464682:
-            case 808071472:
-            case 707408170:
-            case 808071466:
-            case 707801392:
-            case 808464688:return 4;
-            case 825241904:
-            case 824848682:
-            case 824848688:
-            case 825241898:return 5;
-            case 808530218:
-            case 707866928:
-            case 808530224:
-            case 707866922:return 6;
-            case 825307440:
-            case 825307434:return 7;
-            case 707801137:
-            case 707407921:
-            case 808464433:
-            case 808462897:
-            case 707799601:
-            case 808069681:
-            case 707406385:
-            case 808071217:return 8;
-            case 824846897:
-            case 824848433:
-            case 825240113:
-            case 825241649:return 9;
-            case 707866673:
-            case 707865137:
-            case 808529969:
-            case 808528433:return 10;
-            case 825305649:
-            case 825307185:return 11;
-            case 808071473:
-            case 808464689:
-            case 707801393:
-            case 707408177:return 12;
-            case 825241905:
-            case 824848689:return 13;
-            case 707866929:
-            case 808530225:return 14;
-            case 825307441:return 15;
-            default:
-                return -1;
-        }
+    inline unsigned int convert_l(const unsigned int x) {
+        unsigned int hash = (2 * x + 2) % 367;
+        return tablel[hash];
     }
 
-    inline unsigned int convert_r(const unsigned int &x) {
-        switch(x){
-            case 808464432:return 0;
-            case 707801136:
-            case 825241648:return 1;
-            case 808529968:
-            case 808071216:return 2;
-            case 825307184:
-            case 707407920:
-            case 824848432:
-            case 707866672:return 3;
-            case 808464688:
-            case 808462896:return 4;
-            case 707801392:
-            case 825241904:
-            case 707799600:
-            case 825240112:return 5;
-            case 808528432:
-            case 808069680:
-            case 808530224:
-            case 808071472:return 6;
-            case 707865136:
-            case 824846896:
-            case 825305648:
-            case 707866928:
-            case 825307440:
-            case 824848688:
-            case 707406384:
-            case 707408176:return 7;
-            case 808464433:
-            case 808464426:return 8;
-            case 707801137:
-            case 825241649:
-            case 825241642:
-            case 707801130:return 9;
-            case 808529962:
-            case 808529969:
-            case 808071210:
-            case 808071217:return 10;
-            case 707407921:
-            case 825307178:
-            case 707866673:
-            case 825307185:
-            case 707407914:
-            case 824848433:
-            case 707866666:
-            case 824848426:return 11;
-            case 808464689:
-            case 808464682:
-            case 808462897:
-            case 808462890:return 12;
-            case 825241898:
-            case 825240106:
-            case 825241905:
-            case 707801393:
-            case 707799601:
-            case 825240113:
-            case 707801386:
-            case 707799594:return 13;
-            case 808071473:
-            case 808530225:
-            case 808071466:
-            case 808069674:
-            case 808069681:
-            case 808530218:
-            case 808528433:
-            case 808528426:return 14;
-            case 707865137:
-            case 825305649:
-            case 824846897:
-            case 825305642:
-            case 707865130:
-            case 824846890:
-            case 707406378:
-            case 824848689:
-            case 707866929:
-            case 825307441:
-            case 707866922:
-            case 707408177:
-            case 707408170:
-            case 824848682:
-            case 825307434:
-            case 707406385:return 15;
-            default:
-                return -1;
-        }
+    const int tabler[] = {-1, -1, 0, -1, -1, -1, 2, -1, -1, -1, -1, -1, -1, -1, 0, -1, 8, -1, 2, -1, 10, 5, -1, -1, -1,
+                          -1, -1, -1, -1, -1, -1, -1, 4, 5, -1, 13, -1, -1, -1, -1, -1, -1, -1, -1, 4, -1, 12, -1, -1,
+                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 5, -1, -1,
+                          -1, 7, -1, -1, -1, -1, -1, -1, 4, 5, -1, 13, 6, 7, -1, 15, -1, -1, -1, -1, 4, -1, 12, -1, 6,
+                          4, 14, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, 4, -1, 12, -1, -1, -1, -1, -1, 0, 1, -1, 9, -1,
+                          -1, -1, -1, -1, -1, -1, -1, 0, -1, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                          4, -1, -1, -1, 6, -1, -1, -1, -1, 1, -1, -1, 4, 3, 12, -1, 6, -1, 14, -1, 0, 1, -1, 9, 2, 3,
+                          -1, 11, -1, -1, -1, -1, 0, -1, 8, -1, 2, 0, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1,
+                          8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, 2, -1, -1, -1, -1, -1, 1, -1, 0,
+                          -1, 8, -1, 2, -1, 10, -1, -1, 0, 1, -1, 9, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, 8, -1, -1,
+                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1,
+                          -1, 3, -1, -1, -1, -1, -1, -1, 0, 1, -1, 9, 2, 3, -1, 11, -1, -1, -1, -1, 0, -1, 8, -1, 2, 0,
+                          10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, 8};
+
+    inline unsigned int convert_r(const unsigned int x) {
+        unsigned int hash = (2 * x + 2) % 367;
+        return tabler[hash];
     }
+
 }
 
 namespace parsing {
@@ -398,22 +253,9 @@ int main() {
 //            }
 //        }
 //    }
-//    vector<pair<unsigned int, unsigned int>> temp;
-//    for (auto cur : convertr){
-//        temp.emplace_back(cur.first, cur.second);
-////        cout << "case " << cur.first << ":return "<<cur.second << ";\n";
+//    for (auto cur : convertl){
+//        cout << "else if (x == " << cur.first << ")return "<<cur.second << ";\n";
 //    }
-//    std::sort(temp.begin(), temp.end(), [](pair<unsigned int, unsigned int> a, pair<unsigned int, unsigned int>b) { return a.second < b.second;});
-//    for (size_t i = 0; i < temp.size()-1; ++i){
-//        const auto &cur = temp[i];
-//        if (temp[i].second == temp[i+1].second){
-//            cout << "case " << cur.first << ":\n";
-//        }else{
-//            cout << "case " << cur.first << ":return "<<cur.second << ";\n";
-//        }
-//    }
-//    cout << "case " << temp[temp.size()-1].first << ":return "<<temp[temp.size()-1].second << ";\n";
-//    return 0;
 //    for (auto cur : convertr){
 //        cout << "else if (x == " << cur.first << ")return "<<cur.second << ";\n";
 //    }
@@ -446,6 +288,7 @@ int main() {
 //    }
 //    cout << "l: " << bitset<32>(l) << ", r: " << bitset<32>(r) << endl;
 //    return 0;
+
 
     data::ans.fill(-1);
 
@@ -521,22 +364,18 @@ int main() {
         logic::evt[logic::n_evt++] = logic::event{data::rules[i][best_dim].second, i, logic::event::type::CLOSE};
     }
     sort(logic::evt.begin(), logic::evt.begin() + logic::n_evt);
-    static utils::bag open;
-
+    set<unsigned int> open;
     for (unsigned int i = 0; i < logic::n_evt; i++) {
         const logic::event &e = logic::evt[i];
         if (e.type == logic::event::type::OPEN)
             open.insert(e.id);
         if (e.type == logic::event::type::KEY) {
-            for (unsigned int chunk_id = 0; chunk_id < open.chunks.size(); chunk_id++) {
-                for (auto it: open.chunks[chunk_id]) {
-                    if (utils::match(data::rules[it], data::keys[e.id])) {
-                        data::ans[e.id] = it;
-                        goto escape;
-                    }
+            for (const auto it: open) {
+                if (utils::match(data::rules[it], data::keys[e.id])) {
+                    data::ans[e.id] = it;
+                    break;
                 }
             }
-            escape:;
         }
         if (e.type == logic::event::type::CLOSE)
             open.erase(e.id);
