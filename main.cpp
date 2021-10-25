@@ -1,108 +1,243 @@
+#pragma GCC target ("avx2")
+#pragma GCC optimization ("O3")
+#pragma GCC optimization ("unroll-loops")
+
 #include<iostream>
 #include<vector>
+#include<array>
+#include<limits>
+#include<algorithm>
+#include<cmath>
+#include<bitset>
 
 using namespace std;
 
-enum dimension_type {
-    TERNARY, RANGE
-};
+namespace schema {
+    enum dimension_type {
+        IP, PORT
+    };
+    unsigned int n_dims;
 
-struct rule {
-    vector<string> ternaries;
-    vector<pair<unsigned short, unsigned short>> ranges;
+    const unsigned int MAXD = 5;
+    array<dimension_type, MAXD> dims;
 
-    rule() = default;
+    unsigned int best_dim = 1;
+}
 
-    rule(const vector<string> &tokens, const vector<dimension_type> &schema) {
-        for (int i = 0; i < tokens.size(); ++i) {
+namespace data {
+    const unsigned int IP_SIZE = 32;
+
+    unsigned int n, m;
+    const unsigned int MAXN = 150000;
+    const unsigned int MAXM = 15000;
+
+    array<array<pair<unsigned int, unsigned int>, schema::MAXD>, MAXN> rules;
+    array<array<unsigned int, schema::MAXD>, MAXM> keys;
+    array<int, MAXM> ans;
+}
+
+namespace utils {
+    bool match(const array<pair<unsigned int, unsigned int>, schema::MAXD> &rule,
+               const array<unsigned int, schema::MAXD> &key) {
+        for (unsigned int i = 0; i < schema::best_dim; i++)
+            if (key[i] < rule[i].first or key[i] > rule[i].second)
+                return false;
+
+        for (unsigned int i = schema::best_dim + 1; i < schema::MAXD; i++)
+            if (key[i] < rule[i].first or key[i] > rule[i].second)
+                return false;
+        return true;
+    }
+
+    struct bag {
+        array<vector<unsigned int>, data::MAXN / 512 + 1> chunks;
+
+        void insert(unsigned int x) {
+            auto &chunk = chunks[x >> 9];
+            chunk.insert(lower_bound(chunk.begin(), chunk.end(), x), x);
+        }
+
+        void erase(unsigned int x) {
+            auto &chunk = chunks[x >> 9];
+            chunk.erase(lower_bound(chunk.begin(), chunk.end(), x));
+        }
+    };
+}
+
+namespace parsing {
+    unsigned int parse_key_token(const string &token, const schema::dimension_type &type) {
+        unsigned int ret = 0;
+        if (type == schema::dimension_type::IP)
+            ret = (unsigned int) stoul(token, nullptr, 2);
+        else
+            ret = (unsigned int) stoul(token);
+        return ret;
+    }
+
+    array<pair<unsigned int, unsigned int>, schema::MAXD>
+    parse_rule(const vector<string> &tokens) {
+        array<pair<unsigned int, unsigned int>, schema::MAXD> ranges;
+        for (unsigned int i = 0; i < schema::n_dims; ++i) {
+            ranges[i] = {0, 0};
             const auto &token = tokens[i];
-            if (schema[i] == dimension_type::TERNARY)
-                ternaries.push_back(token);
-            else {
-                auto div = token.find("-");
-                auto l = (unsigned short) stoi(token.substr(0, div));
-                auto r = (unsigned short) stoi(token.substr(div + 1));
-                ranges.emplace_back(l, r);
+            const auto &type = schema::dims[i];
+            auto &l = ranges[i].first;
+            auto &r = ranges[i].second;
+            if (type == schema::dimension_type::IP) {
+                for (unsigned int j = 0; j < data::IP_SIZE; ++j) {
+                    const char c = token[j];
+                    if (c == '*') {
+                        l <<= (data::IP_SIZE - j);
+                        r <<= (data::IP_SIZE - j);
+                        r |= ((unsigned int) ~0) >> j;
+                        break;
+                    } else {
+                        l <<= 1;
+                        l |= (c - '0');
+                        r <<= 1;
+                        r |= (c - '0');
+                    }
+                }
+            } else {
+                unsigned int cur = 0;
+                while (token[cur] != '-') {
+                    l = l * 10 + token[cur] - '0';
+                    cur++;
+                }
+                cur++;
+                while (cur < token.size() && token[cur] != '\r') {
+                    r = r * 10 + token[cur] - '0';
+                    cur++;
+                }
             }
         }
+        for (unsigned int i = schema::n_dims; i < schema::MAXD; i++)
+            ranges[i] = {0, numeric_limits<unsigned int>::max()};
+        return ranges;
     }
-};
 
-struct key {
-    vector<string> ternaries;
-    vector<unsigned short> ranges;
+    array<unsigned int, schema::MAXD>
+    parse_key(const vector<string> &tokens) {
+        array<unsigned int, schema::MAXD> ret{};
+        for (unsigned int i = 0; i < schema::n_dims; ++i)
+            ret[i] = parse_key_token(tokens[i], schema::dims[i]);
+        return ret;
+    }
 
-    key() = default;
+    void parse_input() {
+        ios_base::sync_with_stdio(false);
+        cin.tie(nullptr);
+        cout.tie(nullptr);
 
-    key(const vector<string> &tokens, const vector<dimension_type> &schema) {
-        for (int i = 0; i < tokens.size(); ++i) {
-            const auto &token = tokens[i];
-            if (schema[i] == dimension_type::TERNARY)
-                ternaries.push_back(token);
-            else
-                ranges.push_back((unsigned short)stoi(token));
+
+        freopen("input.txt", "r", stdin);
+        freopen("output.txt", "w", stdout);
+
+        cin >> data::n;
+        {
+            vector<string> tokens;
+            {
+                string line;
+
+                cin.ignore();
+                cin.ignore();
+
+                getline(cin, line);
+                size_t r = 0;
+                while ((r = line.find(' ')) != string::npos) {
+                    tokens.push_back(line.substr(0, r));
+                    line.erase(0, r + 1);
+                }
+                tokens.push_back(line);
+            }
+            for (const auto &token: tokens) {
+                if (token.find('-') == string::npos)
+                    schema::dims[schema::n_dims++] = schema::dimension_type::IP;
+                else
+                    schema::dims[schema::n_dims++] = schema::dimension_type::PORT;
+            }
+            data::rules[0] = parse_rule(tokens);
+        }
+
+        for (unsigned int i = 1; i < data::n; i++) {
+            vector<string> tokens(schema::n_dims);
+            for (unsigned int j = 0; j < schema::n_dims; j++)
+                cin >> tokens[j];
+            data::rules[i] = parse_rule(tokens);
+        }
+
+        cin >> data::m;
+
+        for (unsigned int i = 0; i < data::m; i++) {
+            vector<string> tokens(schema::n_dims);
+            for (unsigned int j = 0; j < schema::n_dims; j++)
+                cin >> tokens[j];
+            data::keys[i] = parse_key(tokens);
         }
     }
-};
+}
 
 int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(nullptr);
-    cout.tie(nullptr);
+    parsing::parse_input();
 
-    freopen("input.txt", "r", stdin);
-    freopen("output.txt", "w", stdout);
+    data::ans.fill(-1);
 
-    size_t n; // rule count
-    cin >> n;
+    struct event {
+        unsigned int loc, id;
+        enum type {
+            OPEN, KEY, CLOSE
+        } type;
 
-    vector<rule> rules(n);
-
-    vector<dimension_type> dims;
+        bool operator<(const event &other) const {
+            return loc < other.loc;
+        }
+    };
     {
-        vector<string> tokens;
-        {
-            string line;
-
-            cin.ignore();
-            getline(cin, line);
-            size_t r = 0;
-            while ((r = line.find(" ")) != string::npos) {
-                tokens.push_back(line.substr(0, r));
-                line.erase(0, r + 1);
+        unsigned int passed_ip_dims = 0;
+        for (unsigned int i = 0; i < schema::n_dims; i++) {
+            if (schema::dims[i] == schema::dimension_type::IP) {
+                if (passed_ip_dims == 2) {
+                    schema::best_dim = i;
+                    break;
+                }
+                else
+                    passed_ip_dims++;
             }
-            tokens.push_back(line);
         }
-        for (const auto &token: tokens) {
-            if (token.find("-") == string::npos)
-                dims.push_back(dimension_type::TERNARY);
-            else
-                dims.push_back(dimension_type::RANGE);
+    }
+    static array<event, 2u * data::MAXN + data::MAXM> evt;
+    unsigned int n_evt = 0;
+
+    for (unsigned int i = 0; i < data::n; i++)
+        evt[n_evt++] = event{data::rules[i][schema::best_dim].first, i, event::type::OPEN};
+    for (unsigned int i = 0; i < data::m; i++)
+        evt[n_evt++] = event{data::keys[i][schema::best_dim], i, event::type::KEY};
+    for (unsigned int i = 0; i < data::n; i++)
+        evt[n_evt++] = event{data::rules[i][schema::best_dim].second, i, event::type::CLOSE};
+
+    stable_sort(evt.begin(), evt.begin() + n_evt);
+    static utils::bag open;
+
+    for (unsigned int i = 0; i < n_evt; i++) {
+        const event &e = evt[i];
+        if (e.type == event::type::OPEN)
+            open.insert(e.id);
+        if (e.type == event::type::KEY) {
+            for (const auto &chunk: open.chunks) {
+                for (auto it: chunk) {
+                    if (utils::match(data::rules[it], data::keys[e.id])) {
+                        data::ans[e.id] = it;
+                        goto escape;
+                    }
+                }
+            }
+            escape:;
         }
-
-        rules[0] = rule(tokens, dims);
+        if (e.type == event::type::CLOSE)
+            open.erase(e.id);
     }
 
-    for (int i = 1; i < n; i++) {
-        vector<string> tokens(dims.size());
-        for (int j = 0; j < dims.size(); j++)
-            cin >> tokens[j];
-        rules[i] = rule(tokens, dims);
-    }
-
-    size_t m; // key count
-    cin >> m;
-
-
-    vector<key> keys(m);
-    for (int i = 0; i < m; i++) {
-        vector<string> tokens(dims.size());
-        for (int j = 0; j < dims.size(); j++)
-            cin >> tokens[j];
-        keys[i] = key(tokens, dims);
-    }
-
-
-
+    for (unsigned int i = 0; i < data::m; i++)
+        cout << data::ans[i] << '\n';
     return 0;
 }
